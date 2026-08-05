@@ -1,6 +1,6 @@
 resource "azurerm_resource_group" "main" {
   name     = "portfolio-rg"
-  location = "eastus"
+  location = "chilecentral"
 }
 
 resource "azurerm_virtual_network" "main" {
@@ -19,6 +19,7 @@ resource "azurerm_subnet" "public" {
   resource_group_name  = azurerm_resource_group.main.name
   virtual_network_name = azurerm_virtual_network.main.name
   address_prefixes     = ["10.0.1.0/24"]
+  depends_on = [azurerm_virtual_network.main]
 }
 
 resource "azurerm_subnet" "private" {
@@ -26,6 +27,7 @@ resource "azurerm_subnet" "private" {
   resource_group_name  = azurerm_resource_group.main.name
   virtual_network_name = azurerm_virtual_network.main.name
   address_prefixes     = ["10.0.2.0/24"]
+  depends_on = [azurerm_subnet.public]
 }
 resource "azurerm_network_security_group" "web" {
   name                = "portfolio-web-nsg"
@@ -89,7 +91,7 @@ resource "azurerm_linux_virtual_machine" "web" {
   name                = "portfolio-web-vm"
   resource_group_name = azurerm_resource_group.main.name
   location            = azurerm_resource_group.main.location
-  size                = "Standard_D2s_v3"
+  size                = "Standard_B2ats_v2"
   admin_username      = "azureuser"
   network_interface_ids = [
     azurerm_network_interface.web.id,
