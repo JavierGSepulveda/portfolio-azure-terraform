@@ -1,3 +1,5 @@
 .terraform/
 *.tfstate
 *.tfstate.backup
+portfolio-azure-key
+portfolio-azure-key.pub

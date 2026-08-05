@@ -1,6 +1,6 @@
 resource "azurerm_resource_group" "main" {
   name     = "portfolio-rg"
-  location = "Chile Central"
+  location = "eastus"
 }
 
 resource "azurerm_virtual_network" "main" {
@@ -60,4 +60,59 @@ resource "azurerm_network_security_group" "web" {
 resource "azurerm_subnet_network_security_group_association" "public" {
   subnet_id                 = azurerm_subnet.public.id
   network_security_group_id = azurerm_network_security_group.web.id
+}
+
+resource "azurerm_public_ip" "web" {
+  name                = "portfolio-web-ip"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  allocation_method   = "Static"
+
+  tags = {
+    Name = "Portfolio-web-ip"
+  }
+}
+
+resource "azurerm_network_interface" "web" {
+  name                = "portfolio-web-nic"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+
+  ip_configuration {
+    name                          = "internal"
+    subnet_id                     = azurerm_subnet.public.id
+    private_ip_address_allocation = "Dynamic"
+    public_ip_address_id          = azurerm_public_ip.web.id
+  }
+}
+resource "azurerm_linux_virtual_machine" "web" {
+  name                = "portfolio-web-vm"
+  resource_group_name = azurerm_resource_group.main.name
+  location            = azurerm_resource_group.main.location
+  size                = "Standard_D2s_v3"
+  admin_username      = "azureuser"
+  network_interface_ids = [
+    azurerm_network_interface.web.id,
+  ]
+
+  admin_ssh_key {
+    username   = "azureuser"
+    public_key = file("portfolio-azure-key.pub")
+  }
+
+  os_disk {
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
+  }
+
+  source_image_reference {
+    publisher = "Canonical"
+    offer     = "Ubuntu-24_04-lts"
+    sku       = "server"
+    version   = "latest"
+  }
+  custom_data = filebase64("custom_data.sh")
+  tags = {
+    Name = "Portfolio-web-vm"
+  }
 }
