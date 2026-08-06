@@ -1,0 +1,1 @@
+﻿Hola, este es un asset de prueba subido a Azure Storage con Terraform.

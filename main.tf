@@ -118,3 +118,36 @@ resource "azurerm_linux_virtual_machine" "web" {
     Name = "Portfolio-web-vm"
   }
 }
+
+resource "random_string"  "storage_suffix" {
+  length  = 6
+  special = false
+  upper  = false
+}
+
+resource "azurerm_storage_account" "assets" {
+  name                     = "portfoliostorage${random_string.storage_suffix.result}"
+  resource_group_name      = azurerm_resource_group.main.name
+  location                 = azurerm_resource_group.main.location
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
+
+  allow_nested_items_to_be_public = false
+
+  tags = {
+    Name = "Portfolio-storage"
+  }
+}
+resource "azurerm_storage_container" "assets" {
+  name                  = "static-assets"
+  storage_account_id  = azurerm_storage_account.assets.id
+  container_access_type = "private"
+}
+
+resource "azurerm_storage_blob" "sample_asset" {
+  name                   = "hello.txt"
+  storage_account_name   = azurerm_storage_account.assets.name
+  storage_container_name = azurerm_storage_container.assets.name
+  type                   = "Block"
+  source                 = "assets/hello.txt"
+}
